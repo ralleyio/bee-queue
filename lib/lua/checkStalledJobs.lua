@@ -44,15 +44,10 @@ if next(stalling) ~= nil then
 end
 
 -- copy currently active jobs into stalling set
-local activesLen = redis.call("llen", KEYS[4])
-if activesLen > 0 then
-  local loops = math.floor(activesLen / count) + 1
-  for i = 0, loops do
-    local next = loops * count
-    local actives = redis.call("lrange", KEYS[4], next, next + count - 1)
-    if next(actives) ~= nil then
-      redis.call("sadd", KEYS[2], unpack(actives))
-    end
+local actives = redis.call("lrange", KEYS[4], 0, -1)
+if next(actives) ~= nil then
+  for k, v in pairs(actives) do
+    redis.call("sadd", KEYS[2], v)
   end
 end
 
