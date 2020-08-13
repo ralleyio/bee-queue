@@ -12,6 +12,8 @@ if a jobId is not removed from the stalling set within a stallInterval window,
 we assume the job has stalled and should be reset (moved from active back to waiting)
 --]]
 
+local count = 1000
+
 -- try to update the stallBlock key
 if not redis.call("set", KEYS[1], "1", "PX", tonumber(ARGV[1]), "NX") then
   -- hasn't been long enough (stallInterval) since last check
@@ -42,9 +44,16 @@ if next(stalling) ~= nil then
 end
 
 -- copy currently active jobs into stalling set
-local actives = redis.call("lrange", KEYS[4], 0, -1)
-if next(actives) ~= nil then
-  redis.call("sadd", KEYS[2], unpack(actives))
+local activesLen = redis.call("llen", KEYS[4])
+if activesLen > 0 then
+  local loops = math.floor(activesLen / count) + 1
+  for i = 0, loops do
+    local next = loops * count
+    local actives = redis.call("lrange", KEYS[4], next, next + count - 1)
+    if next(actives) ~= nil then
+      redis.call("sadd", KEYS[2], unpack(actives))
+    end
+  end
 end
 
 return stalled

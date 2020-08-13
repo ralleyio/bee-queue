@@ -12,6 +12,7 @@ local now = tonumber(ARGV[1])
 local offset = 0
 -- There is a default 1024 element restriction
 local count = 1000
+
 while true do
   local raising = redis.call("zrangebyscore", KEYS[1], 0, ARGV[1], 'LIMIT', offset, count)
   local numRaising = #raising
